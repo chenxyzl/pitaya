@@ -321,5 +321,5 @@ func main() {
 		pitaya.SetRPCClient(gc)
 	}
 
-	pitaya.Start()
+	pitaya.Run()
 }

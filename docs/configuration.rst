@@ -365,10 +365,6 @@ Concurrency
     - 20
     - int
     - Buffer size for messages received by the handler and forwarded to remote servers
-  * - pitaya.concurrency.handler.dispatch
-    - 25
-    - int
-    - Number of goroutines processing messages at the handler service
 
 Modules
 =======

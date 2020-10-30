@@ -114,5 +114,5 @@ func main() {
 	// Enable default validator
 	config.Set("pitaya.defaultpipelines.structvalidation.enabled", true)
 	pitaya.Configure(*isFrontend, *svType, pitaya.Cluster, map[string]string{}, config)
-	pitaya.Start()
+	pitaya.Run()
 }

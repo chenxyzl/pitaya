@@ -132,7 +132,7 @@ func main() {
 	pitaya.AddAcceptor(t)
 
 	pitaya.Configure(true, "chat", pitaya.Cluster, map[string]string{}, conf)
-	pitaya.Start()
+	pitaya.Run()
 }
 
 func configApp() *viper.Viper {

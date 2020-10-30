@@ -22,6 +22,7 @@ package pitaya
 
 import (
 	"context"
+	mods "github.com/topfreegames/pitaya/modules"
 	"os"
 	"os/signal"
 	"reflect"
@@ -46,7 +47,6 @@ import (
 	"github.com/topfreegames/pitaya/errors"
 	"github.com/topfreegames/pitaya/logger"
 	"github.com/topfreegames/pitaya/metrics"
-	mods "github.com/topfreegames/pitaya/modules"
 	"github.com/topfreegames/pitaya/remote"
 	"github.com/topfreegames/pitaya/router"
 	"github.com/topfreegames/pitaya/serialize"
@@ -75,7 +75,8 @@ type App struct {
 	config           *config.Config
 	configured       bool
 	debug            bool
-	dieChan          chan bool
+	stopChan         chan bool
+	quitChan         chan bool
 	heartbeat        time.Duration
 	onSessionBind    func(*session.Session)
 	messageEncoder   message.Encoder
@@ -99,7 +100,8 @@ var (
 		server:           cluster.NewServer(uuid.New().String(), "game", true, map[string]string{}),
 		debug:            false,
 		startAt:          time.Now(),
-		dieChan:          make(chan bool),
+		stopChan:         make(chan bool),
+		quitChan:         make(chan bool),
 		acceptors:        []acceptor.Acceptor{},
 		packetDecoder:    codec.NewPomeloPacketDecoder(),
 		packetEncoder:    codec.NewPomeloPacketEncoder(),
@@ -193,7 +195,7 @@ func AddAcceptor(ac acceptor.Acceptor) {
 
 // GetDieChan gets the channel that the app sinalizes when its going to die
 func GetDieChan() chan bool {
-	return app.dieChan
+	return app.stopChan
 }
 
 // SetDebug toggles debug on/off
@@ -293,7 +295,7 @@ func startDefaultSD() {
 	app.serviceDiscovery, err = cluster.NewEtcdServiceDiscovery(
 		app.config,
 		app.server,
-		app.dieChan,
+		app.stopChan,
 	)
 	if err != nil {
 		logger.Log.Fatalf("error starting cluster service discovery component: %s", err.Error())
@@ -302,7 +304,7 @@ func startDefaultSD() {
 
 func startDefaultRPCServer() {
 	// initialize default rpc server
-	rpcServer, err := cluster.NewNatsRPCServer(app.config, app.server, app.metricsReporters, app.dieChan)
+	rpcServer, err := cluster.NewNatsRPCServer(app.config, app.server, app.metricsReporters, app.stopChan)
 	if err != nil {
 		logger.Log.Fatalf("error starting cluster rpc server component: %s", err.Error())
 	}
@@ -311,7 +313,7 @@ func startDefaultRPCServer() {
 
 func startDefaultRPCClient() {
 	// initialize default rpc client
-	rpcClient, err := cluster.NewNatsRPCClient(app.config, app.server, app.metricsReporters, app.dieChan)
+	rpcClient, err := cluster.NewNatsRPCClient(app.config, app.server, app.metricsReporters, app.stopChan)
 	if err != nil {
 		logger.Log.Fatalf("error starting cluster rpc client component: %s", err.Error())
 	}
@@ -335,8 +337,8 @@ func periodicMetrics() {
 	}
 }
 
-// Start starts the app
-func Start() {
+// Ran starts the app
+func Run() {
 	if !app.configured {
 		logger.Log.Fatal("starting app without configuring it first! call pitaya.Configure()")
 	}
@@ -402,7 +404,7 @@ func Start() {
 	}
 
 	handlerService = service.NewHandlerService(
-		app.dieChan,
+		app.stopChan,
 		app.packetDecoder,
 		app.packetEncoder,
 		app.serializer,
@@ -418,42 +420,32 @@ func Start() {
 
 	periodicMetrics()
 
-	listen()
-
 	defer func() {
 		timer.GlobalTicker.Stop()
 		app.running = false
 	}()
 
+	mainLoop()
+
+	//start listen
+	listen()
+
 	sg := make(chan os.Signal)
 	signal.Notify(sg, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGTERM)
-
 	// stop server
 	select {
-	case <-app.dieChan:
+	case <-app.quitChan:
 		logger.Log.Warn("the app will shutdown in a few seconds")
 	case s := <-sg:
 		logger.Log.Warn("got signal: ", s, ", shutting down...")
-		close(app.dieChan)
+		close(app.stopChan)
 	}
 
 	logger.Log.Warn("server is stopping...")
-
-	session.CloseAll()
-	shutdownModules()
-	shutdownComponents()
 }
 
 func listen() {
-	startupComponents()
-	// create global ticker instance, timer precision could be customized
-	// by SetTimerPrecision
-	timer.GlobalTicker = time.NewTicker(timer.Precision)
-
-	logger.Log.Infof("starting server %s:%s", app.server.Type, app.server.ID)
-	for i := 0; i < app.config.GetInt("pitaya.concurrency.handler.dispatch"); i++ {
-		go handlerService.Dispatch(i)
-	}
+	logger.Log.Infof("listening start begin")
 	for _, acc := range app.acceptors {
 		a := acc
 		go func() {
@@ -468,18 +460,54 @@ func listen() {
 
 		logger.Log.Infof("listening with acceptor %s on addr %s", reflect.TypeOf(a), a.GetAddr())
 	}
+	logger.Log.Infof("listening start end")
+}
 
-	if app.serverMode == Cluster && app.server.Frontend && app.config.GetBool("pitaya.session.unique") {
-		unique := mods.NewUniqueSession(app.server, app.rpcServer, app.rpcClient)
-		remoteService.AddRemoteBindingListener(unique)
-		RegisterModule(unique, "uniqueSession")
-	}
+func mainLoop() {
+	go func() {
+		//begin
+		logger.Log.Infof("starting server %s:%s", app.server.Type, app.server.ID)
+		startupComponents()
+		if app.serverMode == Cluster && app.server.Frontend && app.config.GetBool("pitaya.session.unique") {
+			unique := mods.NewUniqueSession(app.server, app.rpcServer, app.rpcClient)
+			remoteService.AddRemoteBindingListener(unique)
+			RegisterModule(unique, "uniqueSession")
+		}
+		startModules()
+		logger.Log.Infof("start server end %s:%s", app.server.Type, app.server.ID)
+		app.running = true
 
-	startModules()
+		// create global ticker instance, timer precision could be customized
+		// by SetTimerPrecision
+		timer.GlobalTicker = time.NewTicker(timer.Precision)
+		defer timer.GlobalTicker.Stop()
+	MainLoop:
+		for {
+			select {
+			case <-app.stopChan:
+				break MainLoop
+			case lm := <-handlerService.GetLocalProcess():
+				handlerService.LocalProcess(lm)
+			case rm := <-handlerService.GetRemoteProcess():
+				handlerService.RemoteProcess(rm)
+			case <-timer.GlobalTicker.C: // execute cron task
+				timer.Cron()
+			case t := <-timer.Manager.ChCreatedTimer: // new Timers
+				timer.AddTimer(t)
+			case id := <-timer.Manager.ChClosingTimer: // closing Timers
+				timer.RemoveTimer(id)
+			}
+		}
 
-	logger.Log.Info("all modules started!")
+		//end
+		logger.Log.Infof("stopping server begin %s:%s", app.server.Type, app.server.ID)
+		session.CloseAll()
+		shutdownModules()
+		shutdownComponents()
+		logger.Log.Infof("stop server end %s:%s", app.server.Type, app.server.ID)
 
-	app.running = true
+		close(app.quitChan)
+	}()
 }
 
 // SetDictionary sets routes map
@@ -509,9 +537,9 @@ func AddRoute(
 // Shutdown send a signal to let 'pitaya' shutdown itself.
 func Shutdown() {
 	select {
-	case <-app.dieChan: // prevent closing closed channel
+	case <-app.stopChan: // prevent closing closed channel
 	default:
-		close(app.dieChan)
+		close(app.stopChan)
 	}
 }
 

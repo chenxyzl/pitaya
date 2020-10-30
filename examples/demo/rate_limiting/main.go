@@ -49,5 +49,5 @@ func main() {
 	configureFrontend(*port)
 
 	pitaya.Configure(true, svType, pitaya.Cluster, map[string]string{})
-	pitaya.Start()
+	pitaya.Run()
 }

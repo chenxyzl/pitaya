@@ -124,5 +124,5 @@ func main() {
 	}
 	pitaya.SetRPCServer(gs)
 	pitaya.SetRPCClient(gc)
-	pitaya.Start()
+	pitaya.Run()
 }

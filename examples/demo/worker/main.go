@@ -71,5 +71,5 @@ func main() {
 		panic(err)
 	}
 
-	pitaya.Start()
+	pitaya.Run()
 }

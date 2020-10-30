@@ -45,5 +45,5 @@ func main() {
 
 	pitaya.Configure(isFrontend, svType, pitaya.Cluster, map[string]string{}, config)
 	configureRoom(*port)
-	pitaya.Start()
+	pitaya.Run()
 }

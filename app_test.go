@@ -79,19 +79,19 @@ func setup() {
 	initApp()
 	Configure(true, "testtype", Cluster, map[string]string{}, viper.New())
 
-	etcdSD, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.dieChan)
+	etcdSD, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.stopChan)
 	if err != nil {
 		panic(err)
 	}
 	typeOfetcdSD = reflect.TypeOf(etcdSD)
 
-	natsRPCServer, err := cluster.NewNatsRPCServer(app.config, app.server, nil, app.dieChan)
+	natsRPCServer, err := cluster.NewNatsRPCServer(app.config, app.server, nil, app.stopChan)
 	if err != nil {
 		panic(err)
 	}
 	typeOfNatsRPCServer = reflect.TypeOf(natsRPCServer)
 
-	natsRPCClient, err := cluster.NewNatsRPCClient(app.config, app.server, nil, app.dieChan)
+	natsRPCClient, err := cluster.NewNatsRPCClient(app.config, app.server, nil, app.stopChan)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +116,7 @@ func initApp() {
 		},
 		debug:         false,
 		startAt:       time.Now(),
-		dieChan:       make(chan bool),
+		stopChan:      make(chan bool),
 		acceptors:     []acceptor.Acceptor{},
 		packetDecoder: codec.NewPomeloPacketDecoder(),
 		packetEncoder: codec.NewPomeloPacketEncoder(),
@@ -184,7 +184,7 @@ func TestSetPacketEncoder(t *testing.T) {
 }
 
 func TestGetDieChan(t *testing.T) {
-	assert.Equal(t, app.dieChan, GetDieChan())
+	assert.Equal(t, app.stopChan, GetDieChan())
 }
 func TestGetConfig(t *testing.T) {
 	assert.Equal(t, app.config, GetConfig())
@@ -202,7 +202,7 @@ func TestGetMetricsReporters(t *testing.T) {
 	assert.Equal(t, app.metricsReporters, GetMetricsReporters())
 }
 func TestGetServerByID(t *testing.T) {
-	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.dieChan)
+	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.stopChan)
 	assert.NoError(t, err)
 	assert.NotNil(t, r)
 	SetServiceDiscoveryClient(r)
@@ -212,7 +212,7 @@ func TestGetServerByID(t *testing.T) {
 }
 
 func TestGetServersByType(t *testing.T) {
-	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.dieChan)
+	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.stopChan)
 	assert.NoError(t, err)
 	assert.NotNil(t, r)
 	SetServiceDiscoveryClient(r)
@@ -251,7 +251,7 @@ func TestSetRPCClient(t *testing.T) {
 func TestSetServiceDiscovery(t *testing.T) {
 	initApp()
 	Configure(true, "testtype", Cluster, map[string]string{}, viper.New())
-	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.dieChan)
+	r, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.stopChan)
 	assert.NoError(t, err)
 	assert.NotNil(t, r)
 	SetServiceDiscoveryClient(r)
@@ -327,7 +327,7 @@ func TestShutdown(t *testing.T) {
 	go func() {
 		Shutdown()
 	}()
-	<-app.dieChan
+	<-app.stopChan
 }
 
 func TestConfigureDefaultMetricsReporter(t *testing.T) {
@@ -383,7 +383,7 @@ func TestStartAndListenStandalone(t *testing.T) {
 	AddAcceptor(acc)
 
 	go func() {
-		Start()
+		Run()
 	}()
 	helpers.ShouldEventuallyReturn(t, func() bool {
 		return app.running
@@ -418,7 +418,7 @@ func TestStartAndListenCluster(t *testing.T) {
 	initApp()
 	Configure(true, "testtype", Cluster, map[string]string{}, cfg)
 
-	etcdSD, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.dieChan, cli)
+	etcdSD, err := cluster.NewEtcdServiceDiscovery(app.config, app.server, app.stopChan, cli)
 	assert.NoError(t, err)
 	SetServiceDiscoveryClient(etcdSD)
 
@@ -427,7 +427,7 @@ func TestStartAndListenCluster(t *testing.T) {
 	AddAcceptor(acc)
 
 	go func() {
-		Start()
+		Run()
 	}()
 	helpers.ShouldEventuallyReturn(t, func() bool {
 		return app.running
@@ -708,4 +708,32 @@ func TestRegisterRPCJob(t *testing.T) {
 		err = RegisterRPCJob(nil)
 		assert.Equal(t, constants.ErrRPCJobAlreadyRegistered, err)
 	})
+}
+
+func TestGo(t *testing.T) {
+	a := make(chan bool)
+	b := make(chan bool)
+	go func() {
+		a <- false
+		b <- false
+	}()
+	c := 1
+Main:
+	for {
+		select {
+		case <-a:
+			{
+				break Main
+
+			}
+		case <-b:
+			{
+
+			}
+
+		}
+		println(c)
+		c++
+	}
+	println("a")
 }

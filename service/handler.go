@@ -46,7 +46,6 @@ import (
 	"github.com/topfreegames/pitaya/route"
 	"github.com/topfreegames/pitaya/serialize"
 	"github.com/topfreegames/pitaya/session"
-	"github.com/topfreegames/pitaya/timer"
 	"github.com/topfreegames/pitaya/tracing"
 )
 
@@ -115,32 +114,12 @@ func NewHandlerService(
 	return h
 }
 
-// Dispatch message to corresponding logic handler
-func (h *HandlerService) Dispatch(thread int) {
-	// TODO: This timer is being stopped multiple times, it probably doesn't need to be stopped here
-	defer timer.GlobalTicker.Stop()
+func (h *HandlerService) GetLocalProcess() chan unhandledMessage {
+	return h.chLocalProcess
+}
 
-	for {
-		// Calls to remote servers block calls to local server
-		select {
-		case lm := <-h.chLocalProcess:
-			metrics.ReportMessageProcessDelayFromCtx(lm.ctx, h.metricsReporters, "local")
-			h.localProcess(lm.ctx, lm.agent, lm.route, lm.msg)
-
-		case rm := <-h.chRemoteProcess:
-			metrics.ReportMessageProcessDelayFromCtx(rm.ctx, h.metricsReporters, "remote")
-			h.remoteService.remoteProcess(rm.ctx, nil, rm.agent, rm.route, rm.msg)
-
-		case <-timer.GlobalTicker.C: // execute cron task
-			timer.Cron()
-
-		case t := <-timer.Manager.ChCreatedTimer: // new Timers
-			timer.AddTimer(t)
-
-		case id := <-timer.Manager.ChClosingTimer: // closing Timers
-			timer.RemoveTimer(id)
-		}
-	}
+func (h *HandlerService) GetRemoteProcess() chan unhandledMessage {
+	return h.chRemoteProcess
 }
 
 // Register registers components
@@ -302,6 +281,10 @@ func (h *HandlerService) processMessage(a *agent.Agent, msg *message.Message) {
 	}
 }
 
+func (h *HandlerService) LocalProcess(lm unhandledMessage) {
+	metrics.ReportMessageProcessDelayFromCtx(lm.ctx, h.metricsReporters, "local")
+	h.localProcess(lm.ctx, lm.agent, lm.route, lm.msg)
+}
 func (h *HandlerService) localProcess(ctx context.Context, a *agent.Agent, route *route.Route, msg *message.Message) {
 	var mid uint
 	switch msg.Type {
@@ -327,6 +310,10 @@ func (h *HandlerService) localProcess(ctx context.Context, a *agent.Agent, route
 		metrics.ReportTimingFromCtx(ctx, h.metricsReporters, handlerType, nil)
 		tracing.FinishSpan(ctx, err)
 	}
+}
+func (h *HandlerService) RemoteProcess(rm unhandledMessage) {
+	metrics.ReportMessageProcessDelayFromCtx(rm.ctx, h.metricsReporters, "remote")
+	h.remoteService.remoteProcess(rm.ctx, nil, rm.agent, rm.route, rm.msg)
 }
 
 // DumpServices outputs all registered services

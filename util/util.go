@@ -219,7 +219,7 @@ func StartSpanFromRequest(
 }
 
 // GetContextFromRequest gets the context from a request
-func GetContextFromRequest(req *protos.Request, serverID string) (context.Context, error) {
+func GetContextFromRequest(req *protos.Request) (context.Context, error) {
 	ctx, err := pcontext.Decode(req.GetMetadata())
 	if err != nil {
 		return nil, err

@@ -85,8 +85,7 @@ func (me *MessagesEncoder) Encode(message *Message) ([]byte, error) {
 		// variant length encode
 		for {
 			b := byte(n % 128)
-			n >>= 7
-			if n != 0 {
+     			if n != 0 {
 				buf = append(buf, b+128)
 			} else {
 				buf = append(buf, b)

@@ -258,7 +258,7 @@ func (ns *NatsRPCServer) processMessages(threadID int) {
 		logger.Log.Debugf("(%d) processing message %v", threadID, req.GetMsg().GetId())
 		reply := req.GetMsg().GetReply()
 		var response *protos.Response
-		ctx, err := util.GetContextFromRequest(req, ns.server.ID)
+		ctx, err := util.GetContextFromRequest(req)
 		if err != nil {
 			response = &protos.Response{
 				Error: &protos.Error{

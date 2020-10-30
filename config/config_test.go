@@ -54,7 +54,6 @@ func TestNewConfig(t *testing.T) {
 
 	cfg := viper.New()
 	cfg.SetDefault("pitaya.buffer.agent.messages", 20)
-	cfg.Set("pitaya.concurrency.handler.dispatch", 23)
 	cfg.SetDefault("pitaya.no.default", "custom")
 
 	tables := []struct {
@@ -66,8 +65,6 @@ func TestNewConfig(t *testing.T) {
 		{[]*viper.Viper{cfg}, "pitaya.buffer.agent.messages", 20},
 		{[]*viper.Viper{}, "pitaya.no.default", nil},
 		{[]*viper.Viper{cfg}, "pitaya.no.default", "custom"},
-		{[]*viper.Viper{}, "pitaya.concurrency.handler.dispatch", 25},
-		{[]*viper.Viper{cfg}, "pitaya.concurrency.handler.dispatch", 23},
 		{[]*viper.Viper{}, "pitaya.heartbeat.interval", "123s"},
 		{[]*viper.Viper{cfg}, "pitaya.heartbeat.interval", "123s"},
 		{[]*viper.Viper{}, "pitaya.concurrency.test", "42"},
