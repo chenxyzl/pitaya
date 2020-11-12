@@ -22,7 +22,7 @@ It provides a basic development framework for distributed multiplayer games and 
 
 * [Go](https://golang.org/) >= 1.10
 * [etcd](https://github.com/coreos/etcd) (used for service discovery)
-* [nats](https://github.com/nats-io/nats.go) (optional, used for sending and receiving rpc, grpc implementations can be used too if prefered)
+* [nats](https://github.com/nats-io/nats.go) (optional, used for sending and receiving rpc)
 * [docker](https://www.docker.com) (optional: used for running etcd and nats dependencies on containers)
 
 ### Installing
@@ -33,23 +33,6 @@ git clone https://github.com/topfreegames/pitaya.git
 setup pitaya dependencies
 ```
 make setup
-```
-
-### Hacking pitaya
-
-Here's one example of running Pitaya:
-
-Start etcd (This command requires docker-compose and will run an etcd container locally. An etcd may be run without docker if prefered.)
-```
-cd ./examples/testing && docker-compose up -d etcd
-```
-run the connector frontend server from cluster_grpc example
-```
-make run-cluster-grpc-example-connector
-```
-run the room backend server from the cluster_grpc example
-```
-make run-cluster-grpc-example-room
 ```
 
 Now there should be 2 pitaya servers running, a frontend connector and a backend room. To send requests, use a REPL client for pitaya [pitaya-cli](https://github.com/topfreegames/pitaya-cli). 

@@ -57,7 +57,7 @@ type NatsRPCServer struct {
 	userKickCh             chan *protos.KickMsg
 	sub                    *nats.Subscription
 	dropped                int
-	pitayaServer           protos.PitayaServer
+	pitayaServer           PitayaServer
 	metricsReporters       []metrics.Reporter
 	appDieChan             chan bool
 }
@@ -147,7 +147,7 @@ func (ns *NatsRPCServer) onSessionBind(ctx context.Context, s *session.Session) 
 }
 
 // SetPitayaServer sets the pitaya server
-func (ns *NatsRPCServer) SetPitayaServer(ps protos.PitayaServer) {
+func (ns *NatsRPCServer) SetPitayaServer(ps PitayaServer) {
 	ns.pitayaServer = ps
 }
 

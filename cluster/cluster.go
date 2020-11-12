@@ -36,7 +36,7 @@ import (
 
 // RPCServer interface
 type RPCServer interface {
-	SetPitayaServer(protos.PitayaServer)
+	SetPitayaServer(PitayaServer)
 	interfaces.Module
 }
 

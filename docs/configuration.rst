@@ -102,18 +102,6 @@ The configurations only need to be set if the RPC Service is enabled with the gi
     - 100
     - int
     - Size of the buffer that the nats RPC server creates for push messages
-  * - pitaya.cluster.rpc.client.grpc.dialtimeout
-    - 5s
-    - time.Time
-    - Timeout for the gRPC client to establish the connection
-  * - pitaya.cluster.rpc.client.grpc.lazyconnection
-    - false
-    - bool
-    - Whether the gRPC client should use a lazy connection, that is, connect only when a request is made to that server
-  * - pitaya.cluster.rpc.client.grpc.requesttimeout
-    - 5s
-    - time.Time
-    - Request timeout for RPC calls with the gRPC client
   * - pitaya.cluster.rpc.client.nats.connect
     - nats://localhost:4222
     - string
@@ -142,10 +130,6 @@ The configurations only need to be set if the RPC Service is enabled with the gi
     - 15
     - int
     - Maximum number of retries to reconnect to nats for the server
-  * - pitaya.cluster.rpc.server.grpc.port
-    - 3434
-    - int
-    - The port that the gRPC server listens to
   * - pitaya.concurrency.remote.service
     - 30
     - int
@@ -368,41 +352,6 @@ Concurrency
 
 Modules
 =======
-
-These configurations are only used if the modules are created. It is recommended to use Binding Storage module with gRPC RPC service to be able to use all RPC service features.
-
-.. list-table::
-  :widths: 15 10 10 50
-  :header-rows: 1
-  :stub-columns: 1
-
-  * - Configuration
-    - Default value
-    - Type
-    - Description
-  * - pitaya.session.unique
-    - true
-    - bool
-    - Whether Pitaya should enforce unique sessions for the clients, enabling the unique sessions module
-  * - pitaya.modules.bindingstorage.etcd.endpoints
-    - localhost:2379
-    - string
-    - Comma separated list of etcd endpoints to be used by the binding storage module, should be the same as the service discovery etcd
-  * - pitaya.modules.bindingstorage.etcd.prefix
-    - pitaya/
-    - string
-    - Prefix used for etcd, should be the same as the service discovery
-  * - pitaya.modules.bindingstorage.etcd.dialtimeout
-    - 5s
-    - time.Time
-    - Timeout to establish the etcd connection
-  * - pitaya.modules.bindingstorage.etcd.leasettl
-    - 1h
-    - time.Time
-    - Duration of the etcd lease before automatic renewal
-
-Default Pipelines
-=================
 
 These configurations control if the default pipelines should be enabled or not
 

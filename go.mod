@@ -28,8 +28,6 @@ require (
 	github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a // indirect
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/websocket v1.2.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.3.0 // indirect
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/jhump/protoreflect v1.5.0
 	github.com/jonboulle/clockwork v0.1.0 // indirect
@@ -60,7 +58,6 @@ require (
 	github.com/spf13/pflag v1.0.1 // indirect
 	github.com/spf13/viper v1.0.2
 	github.com/stretchr/testify v1.3.0
-	github.com/tmc/grpc-websocket-proxy v0.0.0-20171017195756-830351dc03c6 // indirect
 	github.com/topfreegames/go-workers v1.0.0
 	github.com/uber-go/atomic v1.3.2 // indirect
 	github.com/uber/jaeger-client-go v2.13.0+incompatible
@@ -70,7 +67,6 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
 	golang.org/x/time v0.0.0-20180314180208-26559e0f760e // indirect
-	google.golang.org/grpc v1.21.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

@@ -32,13 +32,11 @@ import (
 	"github.com/spf13/viper"
 	"github.com/topfreegames/pitaya"
 	"github.com/topfreegames/pitaya/acceptor"
-	"github.com/topfreegames/pitaya/cluster"
 	"github.com/topfreegames/pitaya/component"
 	"github.com/topfreegames/pitaya/config"
 	"github.com/topfreegames/pitaya/constants"
 	"github.com/topfreegames/pitaya/examples/testing/protos"
 	"github.com/topfreegames/pitaya/groups"
-	"github.com/topfreegames/pitaya/modules"
 	"github.com/topfreegames/pitaya/protos/test"
 	"github.com/topfreegames/pitaya/serialize/json"
 	"github.com/topfreegames/pitaya/serialize/protobuf"
@@ -245,13 +243,10 @@ func (t *TestSvc) TestSendRPCNoArgs(ctx context.Context, msg *TestRPCRequest) (*
 
 func main() {
 	port := flag.Int("port", 32222, "the port to listen")
-	svType := flag.String("type", "connector", "the server type")
 	isFrontend := flag.Bool("frontend", true, "if server is frontend")
 	serializer := flag.String("serializer", "json", "json or protobuf")
 	sdPrefix := flag.String("sdprefix", "pitaya/", "prefix to discover other servers")
 	debug := flag.Bool("debug", false, "turn on debug logging")
-	grpc := flag.Bool("grpc", false, "turn on grpc")
-	grpcPort := flag.Int("grpcport", 3434, "the grpc server port")
 
 	flag.Parse()
 
@@ -292,34 +287,6 @@ func main() {
 
 	cfg := viper.New()
 	cfg.Set("pitaya.cluster.sd.etcd.prefix", *sdPrefix)
-	cfg.Set("pitaya.cluster.rpc.server.grpc.port", *grpcPort)
-
-	pitaya.Configure(*isFrontend, *svType, pitaya.Cluster, map[string]string{
-		constants.GRPCHostKey: "127.0.0.1",
-		constants.GRPCPortKey: fmt.Sprintf("%d", *grpcPort),
-	}, cfg)
-	if *grpc {
-		gs, err := cluster.NewGRPCServer(pitaya.GetConfig(), pitaya.GetServer(), pitaya.GetMetricsReporters())
-		if err != nil {
-			panic(err)
-		}
-
-		bs := modules.NewETCDBindingStorage(pitaya.GetServer(), pitaya.GetConfig())
-		pitaya.RegisterModule(bs, "bindingsStorage")
-
-		gc, err := cluster.NewGRPCClient(
-			pitaya.GetConfig(),
-			pitaya.GetServer(),
-			pitaya.GetMetricsReporters(),
-			bs,
-			cluster.NewConfigInfoRetriever(pitaya.GetConfig()),
-		)
-		if err != nil {
-			panic(err)
-		}
-		pitaya.SetRPCServer(gs)
-		pitaya.SetRPCClient(gc)
-	}
 
 	pitaya.Run()
 }

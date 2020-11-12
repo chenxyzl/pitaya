@@ -111,16 +111,8 @@ func StartServer(
 	svType string,
 	port int,
 	sdPrefix string,
-	grpc, lazyConnection bool,
 ) func() {
-	grpcPort := GetFreePort(t)
 	promPort := GetFreePort(t)
-	var useGRPC string
-	if grpc {
-		useGRPC = "true"
-	} else {
-		useGRPC = "false"
-	}
 	t.Helper()
 	args := []string{
 		"-type",
@@ -129,8 +121,6 @@ func StartServer(
 		strconv.Itoa(port),
 		fmt.Sprintf("-frontend=%s", strconv.FormatBool(frontend)),
 		"-sdprefix", sdPrefix,
-		"-grpcport", fmt.Sprintf("%d", grpcPort),
-		fmt.Sprintf("-grpc=%s", useGRPC),
 	}
 	if debug {
 		args = append(args, "-debug")
@@ -144,7 +134,6 @@ func StartServer(
 	// always use a random port for prometheus, to avoid e2e conflicts
 	cmd.Env = []string{
 		fmt.Sprintf("PITAYA_METRICS_PROMETHEUS_PORT=%d", promPort),
-		fmt.Sprintf("PITAYA_CLUSTER_RPC_CLIENT_GRPC_LAZYCONNECTION=%v", lazyConnection),
 	}
 
 	outPipe, err := cmd.StderrPipe()

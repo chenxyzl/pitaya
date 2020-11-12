@@ -63,10 +63,6 @@ This module starts a binary as a child process and pipes its stdout and stderr t
 
 This module adds a callback for `OnSessionBind` that checks if the id being bound has already been bound in one of the other frontend servers.
 
-### Binding storage
-
-This module implements functionality needed by the gRPC RPC implementation to enable the functionality of broadcasting session binds and pushes to users without knowledge of the servers the users are connected to.
-
 ## Monitoring
 
 Pitaya has support for metrics reporting, it comes with Prometheus and Statsd support already implemented and has support for custom reporters that implement the `Reporter` interface. Pitaya also comes with support for open tracing compatible frameworks, allowing the easy integration of Jaeger and others.
@@ -102,7 +98,7 @@ Pipelines are middlewares which allow methods to be executed before and after ha
 
 ## RPCs
 
-Pitaya has support for RPC calls when in cluster mode, there are two components to enable this, RPC client and RPC server. There are currently two options for using RPCs implemented for Pitaya, NATS and gRPC, the default is NATS.
+Pitaya has support for RPC calls when in cluster mode, there are two components to enable this, RPC client and RPC server. There are currently two options for using RPCs implemented for Pitaya, NATS, the default is NATS.
 
 There are two types of RPCs, _Sys_ and _User_.
 

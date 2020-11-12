@@ -51,7 +51,6 @@ var (
 	ErrNatsNoRequestTimeout           = errors.New("pitaya.cluster.rpc.client.nats.requesttimeout cant be empty")
 	ErrNatsPushBufferSizeZero         = errors.New("pitaya.buffer.cluster.rpc.server.nats.push cant be zero")
 	ErrNilCondition                   = errors.New("pitaya/timer: nil condition")
-	ErrNoBindingStorageModule         = errors.New("for sending remote pushes or using unique session module while using grpc you need to pass it a BindingStorage")
 	ErrNoConnectionToServer           = errors.New("rpc client has no connection to the chosen server")
 	ErrNoContextFound                 = errors.New("no context found")
 	ErrNoNatsConnectionString         = errors.New("you have to provide a nats url")
